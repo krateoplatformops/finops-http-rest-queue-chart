@@ -1,0 +1,32 @@
+{{- if .Values.httpRestQueue.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "finops-http-rest-queue-chart.fullname" . }}
+  labels:
+    {{- include "finops-http-rest-queue-chart.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "finops-http-rest-queue-chart.fullname" . }}
+  minReplicas: {{ .Values.httpRestQueue.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.httpRestQueue.autoscaling.maxReplicas }}
+  metrics:
+    {{- if .Values.httpRestQueue.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.httpRestQueue.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.httpRestQueue.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.httpRestQueue.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+{{- end }}

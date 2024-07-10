@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "finops-http-rest-queue-chart.fullname" . }}
+  labels:
+    app.kubernetes.io/component: webservice
+    app.kubernetes.io/part-of: http-rest-queue
+    app: http-rest-queue
+  {{- include "finops-http-rest-queue-chart.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.httpRestQueue.autoscaling.enabled }}
+  replicas: {{ .Values.httpRestQueue.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app: http-rest-queue
+    {{- include "finops-http-rest-queue-chart.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: http-rest-queue
+      {{- include "finops-http-rest-queue-chart.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: webservice
+        image: {{ .Values.httpRestQueue.image.repository }}:{{
+          .Values.httpRestQueue.image.tag | default .Chart.AppVersion
+          }}
+        imagePullPolicy: {{ .Values.httpRestQueue.image.imagePullPolicy
+          }}
+        resources: {{- toYaml .Values.httpRestQueue.resources
+          | nindent 10 }}
+        {{- with .Values.httpRestQueue.volumeMounts }}
+        volumeMounts:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        securityContext: {{- toYaml .Values.httpRestQueue.containerSecurityContext
+          | nindent 10 }}
+      imagePullSecrets: {{- toYaml .Values.imagePullSecrets
+          | nindent 6 }}
+      terminationGracePeriodSeconds: 10
+      {{- with .Values.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
